@@ -1,5 +1,5 @@
 import random
-
+import time
 class Card:
     def __init__(self, suit, number):
         self.suit = suit
@@ -13,17 +13,29 @@ class Hand:
     def __init__(self):
         self.hand = []
     def getScore(self):
-        total = 1
+        total = 0
         for card in self.hand:
             cardVal = min(10, card.getCardValue())
-            total *= cardVal
+            if total == 0:
+                total += cardVal
+            else:
+                if cardVal < 10:
+                    total *= cardVal
+                else:
+                    total += cardVal            
         return total
     def getBlindScore(self):
         total = 1
         for i in range(len(self.hand) - 1):
             card = self.hand[i]
             cardVal = min(10, card.getCardValue())
-            total *= cardVal
+            if total == 0:
+                total += cardVal
+            else:
+                if cardVal < 10:
+                    total *= cardVal
+                else:
+                    total += cardVal            
         return total
     def addCard(self, card):
         self.hand.append(card)
@@ -115,12 +127,12 @@ class Game:
         self.deck = generateMultipleDecks(6)
 
     def makeComputerMove(self):        
-        if self.computer.getScore() < 50:
+        if self.computer.getScore() < 90:
             self.computerHit()
         else:
             self.computerStand()
-        if self.playerDone and not(self.computerDone):
-            self.makeComputerMove()
+        if self.playerDone and not(self.computerDone):            
+            self.makeComputerMove()            
         print(gameStateScore(self.computer.getScore(), self.player.getScore()))
 
     def startGame(self):        

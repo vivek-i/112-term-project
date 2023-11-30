@@ -127,6 +127,8 @@ def drawCard(app, suit, number, x, y):
         number = 'Q'
     elif number == 13:
         number = 'K'
+    elif number == 1:
+        number = 'A'
     #    ♠♥♦♣
     symbol = '♥'
     color = 'red'
