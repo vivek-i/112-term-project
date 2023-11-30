@@ -1,6 +1,5 @@
 import gameLogic
 from cmu_graphics import *
-import math
 
 def onAppStart(app):
     app.playerBalance = 1000
