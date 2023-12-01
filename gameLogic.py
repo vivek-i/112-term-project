@@ -1,5 +1,6 @@
 import random
 import copy
+import time
 
 class Card:
     def __init__(self, suit, number):
@@ -94,6 +95,7 @@ class Game:
         else:
             self.computerStand()
         if self.playerDone and not(self.computerDone):            
+            time.sleep(1)
             self.makeComputerMove()            
 
 

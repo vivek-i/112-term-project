@@ -1,10 +1,9 @@
 import gameLogic
 from cmu_graphics import *
-import random
 
 def onAppStart(app):
     app.playerBalance = 1000
-    app.screen = "rules"
+    app.screen = "home"
     app.width = 1200
     app.height = 1000
     
@@ -18,9 +17,6 @@ def startGame(app):
     app.betAmount = (app.playerBalance // 10) - ((app.playerBalance // 10)%10)
     app.gameOver = False
     app.result = ""
-
-def onStep(app):
-    pass
 
 def onKeyPress(app, key):
     if key == 'r':
