@@ -22,7 +22,7 @@ class Hand:
             if total == 0:
                 total += cardVal
             else:
-                if cardVal < 10:
+                if cardVal < 8:
                     total *= cardVal
                 else:
                     total += cardVal            
@@ -35,7 +35,7 @@ class Hand:
             if total == 0:
                 total += cardVal
             else:
-                if cardVal < 10:
+                if cardVal < 8:
                     total *= cardVal
                 else:
                     total += cardVal       
@@ -94,8 +94,7 @@ class Game:
             self.computerHit()
         else:
             self.computerStand()
-        if self.playerDone and not(self.computerDone):            
-            time.sleep(1)
+        if self.playerDone and not(self.computerDone):                        
             self.makeComputerMove()            
 
 
@@ -169,44 +168,58 @@ class Node:
             return 10
     def gameStateDepthScore(self):        
         playerScore = self.playerHand.getScore()
-        computerScore = self.computerHand.getScore()
-        
-        # difference = computerScore - playerScore
-        # print("max depth", playerScore, computerScore, difference)
-
+        computerScore = self.computerHand.getScore()                
         if computerScore > 112:
             return -10
         elif playerScore > 112:
             return 10
 
+        '''
+            player 60
+            computer 80
+            dPlayer = 50
+            dComputer = 30
+            dPlayer-dComputer/10
+        '''
+
         dPlayer = 121 - playerScore
         dComputer = 121 - computerScore
-        if dPlayer < dComputer:
-            return -10
-        elif dPlayer > dComputer:
-            return 10
-        else:
-            return 0        
+        
+        return (dPlayer-dComputer)/5
         
 
 def exepectiMiniMax(playerHand, computerHand, playerDone):
-    blindHand = copy.deepcopy(playerHand.hand)
-    blindHand = blindHand[:-1]
-    playerBlindHand = Hand()
-    playerBlindHand.hand = blindHand
     
-    initialNode = Node(playerBlindHand, computerHand, "gameState", "computer")
-    initialNode.playerDone = playerDone
+    
+    
 
-    expectedHandValue(initialNode)
+    averageHitScore = 0
+    averageStandScore = 0
+    cards = [1,2,3,4,5,6,7,8,9,10,10,10,10]
+    for cardVal in cards:
+        blindHand = copy.deepcopy(playerHand.hand)
+        blindHand = blindHand[:-1]
+        playerBlindHand = Hand()
+        playerBlindHand.hand = blindHand
+        blindCard = Card("A", cardVal)
+        playerBlindHand.addCard(blindCard)
+        initialNode = Node(playerBlindHand, computerHand, "gameState", "computer")
+        initialNode.playerDone = playerDone
+        expectedHandValue(initialNode)
+        # print("hit score", initialNode.children[0].value)
+        # print("stand score", initialNode.children[1].value)
+        hitScore = initialNode.children[0].value
+        standScore = initialNode.children[1].value
+        averageHitScore += hitScore
+        averageStandScore += standScore
 
-    print("hit score", initialNode.children[0].value)
-    print("stand score", initialNode.children[1].value)
+    averageHitScore /= len(cards)
+    averageStandScore /= len(cards)
 
-    hitScore = initialNode.children[0].value
-    standScore = initialNode.children[1].value
+    print("average hit score", averageHitScore)
+    print("average stand score", averageStandScore)
 
-    if hitScore >= standScore:
+    if averageHitScore >= averageStandScore:
         return "hit"
     return "stand"
 
@@ -220,28 +233,31 @@ def expectedHandValue(node, depth=0):
         return node.value
     else:
         if node.nodeType == "gameState":
+            
             standNode = Node(copy.deepcopy(node.playerHand), copy.deepcopy(node.computerHand), "gameState", "x")            
             chanceNode = Node(copy.deepcopy(node.playerHand), copy.deepcopy(node.computerHand), "chance", node.turn)                
+
             if node.turn == "computer":
                 standNode.turn = "player"
                 standNode.computerDone = True
-                if standNode.computerHand.getScore() >= 112 or standNode.playerHand.getScore() >= 112:
-                    standNode.computerDone = True
-                    standNode.playerDone = True                
-                standNode.terminating = standNode.computerDone and standNode.playerDone
+                
             elif node.turn == "player":
                 standNode.turn = "computer"
                 standNode.playerDone = True
-                if standNode.computerHand.getScore() >= 112 or standNode.playerHand.getScore() >= 112:
-                    standNode.computerDone = True
-                    standNode.playerDone = True                
-                standNode.terminating = standNode.computerDone and standNode.playerDone                            
+                
+            if standNode.computerHand.getScore() >= 112 or standNode.playerHand.getScore() >= 112:
+                standNode.computerDone = True
+                standNode.playerDone = True                
+                standNode.terminating = standNode.computerDone and standNode.playerDone
+
             if chanceNode.computerHand.getScore() >= 112 or chanceNode.playerHand.getScore() >= 112:
                 chanceNode.computerDone = True
                 chanceNode.playerDone = True            
+
             hitScore = 0
             standScore = 0
-            if depth > 6:
+
+            if depth > 5:
                 standNode.terminating = True
                 chanceNode.terminating = True
                 standNode.playerDone = True
@@ -252,17 +268,21 @@ def expectedHandValue(node, depth=0):
                 chanceNode.computerDone = True
                 hitScore = chanceNode.gameStateDepthScore()
                 chanceNode.value = chanceNode.gameStateDepthScore()                            
+
             hitScore = expectedHandValue(chanceNode, depth)
-            chanceNode.value = hitScore
             standScore = expectedHandValue(standNode, depth)
+            
+            chanceNode.value = hitScore
             standNode.value = standScore            
-            node.children = [chanceNode, standNode]     
-            returnVal = 0       
+
+            node.children = [chanceNode, standNode]                 
             if node.turn == "computer":                
-                returnVal = max(hitScore, standScore)
+                return max(hitScore, standScore)
             elif node.turn == "player":                
-                returnVal = min(hitScore, standScore)
-            return returnVal
+                return min(hitScore, standScore)
+            else:
+                return 0
+
         elif node.nodeType == "chance":
             cards = [1,2,3,4,5,6,7,8,9,10,10,10,10]
             totalScore = 0            

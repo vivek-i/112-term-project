@@ -27,7 +27,9 @@ def onKeyPress(app, key):
                 app.playerBalance += app.betAmount
         startGame(app)
     if key == 'e':
-        gameLogic.exepectiMiniMax(app.game.player, app.game.computer)
+        gameLogic.exepectiMiniMax(app.game.player, app.game.computer, app.game.playerDone)
+    if key == 's':
+        gameLogic.exepectiMiniMax(app.game.computer, app.game.player, app.game.computerDone)
 
 def redrawAll(app):
     if app.screen == "game":
@@ -68,8 +70,8 @@ def drawRulesScreen(app):
     drawLabel("- All cards have values. 2-10 are numbered. A = 1, J,Q,K = 10", 150, 200, size=30, fill="white", align="left")    
     drawLabel("- Each player gets one card to begin with", 150, 240, size=30, fill="white", align="left")    
     drawLabel("- Choose 'hit' for another card or 'stand' to keep current cards on each turn", 150, 280, size=30, fill="white", align="left")    
-    drawLabel("- If a card value is less than 10, your hand score is multiplied by that value", 150, 320, size=30, fill="white", align="left")    
-    drawLabel("- If a card value is 10, 10 is added to your hand score", 150, 360, size=30, fill="white", align="left")    
+    drawLabel("- If a card value is 7 or less, your hand score is multiplied by that value", 150, 320, size=30, fill="white", align="left")    
+    drawLabel("- If a card value is 8 or more, that value is added to your hand score", 150, 360, size=30, fill="white", align="left")    
     drawLabel("- The player with the hand valued closest to 112 without crossing wins.", 150, 400, size=30, fill="white", align="left")        
     drawLabel("- You are given $1000 to start with.", 150, 440, size=30, fill="white", align="left")    
     drawLabel("- You can bet as much of it as you want before each game.", 150, 480, size=30, fill="white", align="left")    
