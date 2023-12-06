@@ -1,6 +1,6 @@
 import random
 import copy
-import time
+
 
 class Card:
     def __init__(self, suit, number):
@@ -174,16 +174,8 @@ class Node:
         elif playerScore > 112:
             return 10
 
-        '''
-            player 60
-            computer 80
-            dPlayer = 50
-            dComputer = 30
-            dPlayer-dComputer/10
-        '''
-
-        dPlayer = 121 - playerScore
-        dComputer = 121 - computerScore
+        dPlayer = 112 - playerScore
+        dComputer = 112 - computerScore
         
         return (dPlayer-dComputer)/5
         
