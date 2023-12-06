@@ -1,7 +1,7 @@
 import gameLogic
 from cmu_graphics import *
 import leaderboardLogic
-import random
+from PIL import Image
 
 def onAppStart(app):    
     app.leaderboard = leaderboardLogic.Leaderboard()
@@ -12,10 +12,10 @@ def onAppStart(app):
     app.playerBalance = 1000
     app.playerName = ""
     app.nameInput = ""
+    app.gameBackground = CMUImage(Image.open('bg.png'))
     
     
-def startGame(app):
-    
+def startGame(app):    
     app.screen = "game"    
     app.game = gameLogic.Game()
     app.game.startGame()
@@ -25,9 +25,10 @@ def startGame(app):
     app.betAmount = (app.playerBalance // 10) - ((app.playerBalance // 10)%10)
     app.gameOver = False
     app.result = ""
+    app.suggestion = ""
 
 def onKeyPress(app, key):
-    
+    #Type in name
     if app.playerName == "":
         if key == "backspace":
             if len(app.nameInput) > 0:
@@ -36,6 +37,7 @@ def onKeyPress(app, key):
             if len(app.nameInput) < 15:
                 app.nameInput += key
     else:
+        #Restart game
         if key == 'r':
             if app.gameOver:
                 if app.game.determineWinner() == "Player Wins":
@@ -43,12 +45,15 @@ def onKeyPress(app, key):
                 if app.game.determineWinner() == "Push":
                     app.playerBalance += app.betAmount
             startGame(app)
-        if key == 'e':
+        #For testing, show hit/stand scores for computer
+        elif key == 'e':
             gameLogic.exepectiMiniMax(app.game.player, app.game.computer, app.game.playerDone)
-        if key == 's':
-            gameLogic.exepectiMiniMax(app.game.computer, app.game.player, app.game.computerDone)
+        #show suggestion for player
+        elif key == 's':
+            app.suggestion = gameLogic.exepectiMiniMax(app.game.computer, app.game.player, app.game.computerDone)
 
 def redrawAll(app):
+    gold = rgb(251, 232, 139)
     if app.screen == "game":        
         drawBoard(app)
         if not(app.betsPlaced):
@@ -62,7 +67,6 @@ def redrawAll(app):
                 card = app.game.player.hand[i]
                 drawCard(app, card.suit, card.number, 250 + cardOffset, 250 + cardOffset)
                 cardOffset += 30
-            # drawBlankCard(app, 250 + cardOffset, 250 + cardOffset)    
             hiddenCards = 0
             if app.game.playerDone == False:
                 hiddenCards = 1
@@ -74,18 +78,16 @@ def redrawAll(app):
             if app.game.playerDone == False:
                 drawBlankCard(app, 850 - cardOffset, 250 + cardOffset)       
         if app.result != "":
-            print("adding entry", str(app.playerId), app.playerName, str(app.playerBalance))
             if app.game.determineWinner() == "Player Wins":                
                 app.leaderboard.addEntry(app.playerId, app.playerName, app.playerBalance + app.betAmount*2)
             elif app.game.determineWinner() == "Push":
                 app.leaderboard.addEntry(app.playerId, app.playerName, app.playerBalance + app.betAmount)
             else:
                 app.leaderboard.addEntry(app.playerId, app.playerName, app.playerBalance)
-            drawLabel(app.result + " - Press 'r' to play another hand", app.width/2, 885, align = "center", size=35, fill="white")
+            drawLabel(app.result + " - Press 'r' to play another hand", app.width/2, 885, align = "center", size=35, fill=gold, font="cursive")
         if app.playerName == "":
             drawNamePopup(app)
     elif app.screen == "rules":
-        print("rules screen")
         drawRulesScreen(app)
     elif app.screen == "leaderboard":
         drawLeaderboardScreen(app)
@@ -102,11 +104,12 @@ def drawNamePopup(app):
     
 
 def drawRulesScreen(app):
-    drawRect(0,0,app.width, app.height, fill="darkGreen")
-    drawLabel("112 Blackjack Rules", 100, 100, size=60, fill="white", font="cursive", align="left")    
+    gold = rgb(251, 232, 139)
+    drawRect(0,0,app.width, app.height, fill=rgb(34,34,34))
+    drawLabel("112 Blackjack Rules", 100, 80, size=60, fill=gold, font="cursive", align="left")    
     drawLabel("- The objective is to get a hand value close to 112 without exceeding it.", 150, 160, size=25, fill="white", align="left")    
-    drawLabel("- All cards have values. 2-10 are numbered. A = 1, J,Q,K = 10", 150, 200, size=25, fill="white", align="left")    
-    drawLabel("- Each player gets one card to begin with", 150, 240, size=30, fill="white", align="left")    
+    drawLabel("- All cards have values. 2-10 are valued by their numbers. A = 1, J,Q,K = 10", 150, 200, size=25, fill="white", align="left")    
+    drawLabel("- Each player gets one card to begin with", 150, 240, size=25, fill="white", align="left")    
     drawLabel("- Choose 'hit' for another card or 'stand' to keep current cards on each turn", 150, 280, size=25, fill="white", align="left")    
     drawLabel("- If a card value is 7 or less, your hand score is multiplied by that value", 150, 320, size=25, fill="white", align="left")    
     drawLabel("- If a card value is 8 or more, that value is added to your hand score", 150, 360, size=25, fill="white", align="left")    
@@ -117,73 +120,94 @@ def drawRulesScreen(app):
     drawLabel("- You cannot see the computer's top card.", 150, 560, size=25, fill="white", align="left")    
     drawLabel("- The computer cannot see your top card.", 150, 600, size=25, fill="white", align="left")    
 
-    drawRect(app.width/2-300, 800, 200, 60, fill="red")
-    drawLabel("Back", app.width/2-200, 830, size=40)
-    drawRect(app.width/2+100, 800, 200, 60, fill="yellow")
-    drawLabel("Play", app.width/2+200, 830, size=40)
+    drawRect(app.width/2-300, 800, 200, 60, fill=None, border=gold)
+    drawLabel("Back", app.width/2-200, 830, size=40, fill=gold)
+    drawRect(app.width/2+100, 800, 200, 60, fill=None, border=gold)
+    drawLabel("Play", app.width/2+200, 830, size=40, fill=gold)
     
 def drawLeaderboardScreen(app):
-    drawRect(0,0,app.width, app.height, fill="darkGreen")
-    drawLabel("Leaderboard", 100, 100, size=60, fill="white", align="left")    
+    gold = rgb(251, 232, 139)
+    drawRect(0,0,app.width, app.height, fill=rgb(34,34,34))
+    drawLabel("Leaderboard", 100, 100, size=60, fill="white", align="left",font="cursive")    
     
     data = app.leaderboard.getLeaderboardData()
     
-    numEntries = min(10, len(data))
+    numEntries = min(15, len(data))
     
     for i in range(numEntries):
         row = data[i]        
         drawLabel(f'{i+1}. {row[0]} - {row[1]}', 150, 160 + i*40, size=30, fill="white", align="left")    
-        
-    drawRect(app.width-220, 20, 200, 60, fill="yellow")
-    drawLabel("Play", app.width-120, 50, size=30)
+    drawRect(app.width/2-300, 800, 200, 60, fill=None, border=gold)
+    drawLabel("Home", app.width/2-200, 830, size=40, fill=gold)
+    drawRect(app.width/2+100, 800, 200, 60, fill=None, border=gold)
+    drawLabel("Play", app.width/2+200, 830, size=40, fill=gold)
     
 
 def drawHomeScreen(app):
-    drawRect(0,0,app.width, app.height, fill="black")
-    drawRect(200,50,800,900, fill="darkGreen", border="white")
-    drawLabel("112 Blackjack", app.width/2, 100, size=80, font='Cursive', fill="white")    
-    drawRect(app.width/2-300, 800, 200, 60, fill="red", border="white")
-    drawLabel("Rules", app.width/2-200, 830, size=40)
-    drawRect(app.width/2+100, 800, 200, 60, fill="yellow", border="white")
-    drawLabel("Play", app.width/2+200, 830, size=40)        
+    gold = rgb(251, 232, 139)
+    drawRect(0,0,app.width, app.height, fill=rgb(34,34,34))
+    drawImage(app.gameBackground, 0, 0)
+    drawLabel("112 Blackjack", app.width/2, 60, size=80, font='Cursive', fill=gold)    
+    offset=80
+    drawRect(app.width/2-300, 800+offset, 200, 60, fill=None, border=gold)
+    drawLabel("Rules", app.width/2-200, 830+offset, size=40, fill=gold)
+    drawRect(app.width/2+100, 800+offset, 200, 60, fill=None, border=gold)
+    drawLabel("Play", app.width/2+200, 830+offset, size=40, fill=gold)        
     
     for i in range(1,14):
         symbols = ['C', 'H', 'C', 'D']        
-        drawCard(app, symbols[i%4], i, 370 + (i-1)*30, 200+(i-1)*30)
+        drawCard(app, symbols[i%4], i, 370 + (i-1)*30, 240+(i-1)*30)
 
 
 def drawBoard(app):    
-    drawRect(0,0,app.width, app.height, fill="darkGreen")
-    drawRect(100,200,app.width-200, app.height-400, fill="green", border="black", borderWidth=20)
-    drawLabel("112 Blackjack", app.width/2, app.height/2, size=80, fill="darkGreen")
+    drawRect(0,0,1200,1000,fill=rgb(34,34,34))
+    gold = rgb(251, 232, 139)
+    drawImage(app.gameBackground, 0, 0)
+    drawLabel("112 Blackjack", app.width/2, app.height/2, size=80, fill="darkGreen", font="cursive")
     if app.betsPlaced:
-        drawLabel("Player: " + str(app.game.player.getScore()), app.width * (1/4), app.height-300, size=40, fill="darkGreen")
+        drawLabel("Player: " + str(app.game.player.getScore()), app.width * (1/4)+60, app.height-300, size=40, fill="darkGreen", font="cursive")
         if app.game.playerDone == False:
-            drawLabel("Computer: " + str(app.game.computer.getBlindScore()), app.width* (3/4), app.height-300, size=40, fill="darkGreen")
+            drawLabel("Computer: " + str(app.game.computer.getBlindScore()), app.width* (3/4)-60, app.height-300, size=40, fill="darkGreen", font="cursive")
         else:
-            drawLabel("Computer: " + str(app.game.computer.getScore()), app.width* (3/4), app.height-300, size=40, fill="darkGreen")
+            drawLabel("Computer: " + str(app.game.computer.getScore()), app.width* (3/4)-60, app.height-300, size=40, fill="darkGreen", font="cursive")
     if app.playerName != "":
-        drawLabel(f"{app.playerName}'s Balance: {app.playerBalance}" , 20, 30, size=30, align="left")
+        drawLabel(f"{app.playerName}'s Balance: {app.playerBalance}" , 20, 30, size=30, align="left", fill=gold)
         
-    drawRect(app.width-220, 20, 200, 60, fill="lightBlue")
-    drawLabel("Leaderboard", app.width-120, 50, size=30)
+    drawRect(app.width-220, 20, 200, 60, fill=None, border=gold)
+    drawLabel("Leaderboard", app.width-120, 50, size=30, fill=gold)
 
 def drawOptions(app):
-    # drawRect(0,0,290,0)
-    drawRect(110,820,180,50, fill="blue", border="black")
-    drawLabel("Hit", 200,845, size=20, fill="white")
-    drawRect(310,820,180,50, fill="red", border="black")
-    drawLabel("Stand", 400,845, size=20, fill="white")
+    gold = rgb(251, 232, 139)
+    offset=70
+    if app.suggestion == "hit":
+        drawRect(110,820+offset,180,50, fill=gold, border=gold)
+        drawLabel("Hit", 200,845+offset, size=20, fill="black")
+        drawRect(310,820+offset,180,50, fill=None, border=gold)
+        drawLabel("Stand", 400,845+offset, size=20, fill=gold)
+    elif app.suggestion == "stand":
+        drawRect(110,820+offset,180,50, fill=None, border=gold)
+        drawLabel("Hit", 200,845+offset, size=20, fill=gold)
+        drawRect(310,820+offset,180,50, fill=gold, border=gold)
+        drawLabel("Stand", 400,845+offset, size=20, fill="black")
+    else:
+        drawRect(110,820+offset,180,50, fill=None, border=gold)
+        drawLabel("Hit", 200,845+offset, size=20, fill=gold)
+        drawRect(310,820+offset,180,50, fill=None, border=gold)
+        drawLabel("Stand", 400,845+offset, size=20, fill=gold)
+        
+    drawLabel("Press 's' for a Suggestion", 1150, 950, size=25, fill=gold, align="right")
 
 def drawBettingOptions(app):
-    drawRect(app.width/2-80, 820, 160, 50, border="black", fill=None)
-    drawLabel(str(app.betAmount), app.width/2, 845, size=25)
-    drawCircle(app.width/2-120, 845, 25, border="black", fill=None)
-    drawLabel("-", app.width/2-120, 849, size=30)
-    drawCircle(app.width/2+120, 845, 25, border="black", fill=None)
-    drawLabel("+", app.width/2+120, 847, size=30)
-    drawRect(app.width/2-40, 885, 80, 30, fill="Yellow")
-    drawLabel("Bet", app.width/2, 900, size=25)
+    offset = 50
+    gold = rgb(251, 232, 139)
+    drawRect(app.width/2-80, 820+offset, 160, 50, border=gold, fill=None)
+    drawLabel(str(app.betAmount), app.width/2, 845+offset, size=25, fill=gold)
+    drawCircle(app.width/2-120, 845+offset, 25, border=gold, fill=None)
+    drawLabel("-", app.width/2-120, 849+offset, size=30, fill=gold)
+    drawCircle(app.width/2+120, 845+offset, 25, border=gold, fill=None)
+    drawLabel("+", app.width/2+120, 847+offset, size=30, fill=gold)
+    drawRect(app.width/2-40, 885+offset, 80, 30, fill=gold)
+    drawLabel("Bet", app.width/2, 900+offset, size=25, fill="black")
     
 
 def drawBlankCard(app, x, y):
@@ -191,62 +215,83 @@ def drawBlankCard(app, x, y):
 
 def onMousePress(app, mouseX, mouseY):
     if app.screen == "home":
-        if mouseX >= app.width/2-300 and mouseX <= app.width/2-100 and mouseY >= 800 and mouseY <= 860:
+        offset=80
+        #Rules Screen
+        if mouseX >= app.width/2-300 and mouseX <= app.width/2-100 and mouseY >= 800+offset and mouseY <= 860+offset:
             app.screen="rules"
-            print("rules pressed")
-        elif mouseX >= app.width/2+100 and mouseX <= app.width/2+300 and mouseY >= 800 and mouseY <= 860:
+        #Start Game
+        elif mouseX >= app.width/2+100 and mouseX <= app.width/2+300 and mouseY >= 800+offset and mouseY <= 860+offset:
             app.screen="game"
             startGame(app)    
     elif app.screen == "game":
+        #Submit Name
         if app.playerName == "":        
             if mouseX >= app.width/2+240 and mouseX <= app.width/2+380 and mouseY >= app.height/2 and mouseY <= app.height/2+50:
-                app.playerName = app.nameInput
-                app.leaderboard.addEntry(app.playerId, app.playerName, app.playerBalance)
-                app.nameInput = ""    
+                if app.nameInput != "":
+                    app.playerName = app.nameInput
+                    app.leaderboard.addEntry(app.playerId, app.playerName, app.playerBalance)
+                    app.nameInput = ""    
         else:
+            #Go to leaderboard
             if mouseX >= app.width-220 and mouseX <= app.width-20 and mouseY >= 20 and mouseY <= 60:
                 app.screen = "leaderboard"                        
             if app.betsPlaced == True:
-                if mouseX >= 110 and mouseX <= 290 and mouseY >= 820 and mouseY <= 870:
+                offset=70
+                #Hit
+                if mouseX >= 110 and mouseX <= 290 and mouseY >= 820+offset and mouseY <= 870+offset:
+                    app.suggestion = ""
                     app.game.playerHit()
                     app.game.makeComputerMove()
-                elif mouseX >= 310 and mouseX <= 490 and mouseY >= 820 and mouseY <= 870:
+                #Stand
+                elif mouseX >= 310 and mouseX <= 490 and mouseY >= 820+offset and mouseY <= 870+offset:
+                    app.suggestion = ""
                     app.game.playerStand()
                     app.game.makeComputerMove()
+                #Check Game State
                 if not(app.game.determineWinner() == "In Progress"):
                     app.result = app.game.determineWinner()
                     app.gameOver = True        
             else:
                 betSize = 10
+                offset = 50
                 if app.playerBalance <= 20:
                     betSize = 1
-                if distance(mouseX, app.width/2-120, mouseY, 845) <= 25:
+                #Decrease bet
+                if distance(mouseX, app.width/2-120, mouseY, 845+offset) <= 25:
                     if app.betAmount >= betSize:
-                        print("bet decrease")
                         app.betAmount -= betSize
-                elif distance(mouseX, app.width/2+120, mouseY, 845) <= 25:
+                #Increase Bet
+                elif distance(mouseX, app.width/2+120, mouseY, 845+offset) <= 25:
                     if app.betAmount <= app.playerBalance - betSize:
-                        print("bet increase")
                         app.betAmount += betSize
-                elif mouseX >= app.width/2-40 and mouseX <= app.width/2+40 and mouseY >= 885 and mouseY <= 915:
-                    print("bet submit")
+                        
+                #Submit Bet
+                elif mouseX >= app.width/2-40 and mouseX <= app.width/2+40 and mouseY >= 885+offset and mouseY <= 915+offset:
                     app.playerBalance -= app.betAmount
                     app.betsPlaced = True                       
     elif app.screen == "rules":
+        #Return Home
         if mouseX >= app.width/2-300 and mouseX <= app.width/2-100 and mouseY >= 800 and mouseY <= 860:
             app.screen="home"
+        #Start Game
         elif mouseX >= app.width/2+100 and mouseX <= app.width/2+300 and mouseY >= 800 and mouseY <= 860:
             app.screen="game"
             startGame(app)
     elif app.screen == "leaderboard":
-        if mouseX >= app.width-220 and mouseX <= app.width-20 and mouseY >= 20 and mouseY <= 60:
+        #Return Home
+        if mouseX >= app.width/2-300 and mouseX <= app.width/2-100 and mouseY >= 800 and mouseY <= 860:
+            app.playerName = ""
+            app.playerId = app.leaderboard.generateHash()
+            app.playerBalance = 1000
+            app.screen="home"
+        #Start Game
+        elif mouseX >= app.width/2+100 and mouseX <= app.width/2+300 and mouseY >= 800 and mouseY <= 860:
             app.playerName = ""
             app.playerId = app.leaderboard.generateHash()
             app.playerBalance = 1000
             app.screen = "game"
+            startGame(app)
             
-
-
 def drawCard(app, suit, number, x, y):
     if number == 11:
         number = 'J'

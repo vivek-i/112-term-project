@@ -1,17 +1,19 @@
 import random
 
 
-
+#Class for each leaderboard entry
 class LeaderboardEntry:
     def __init__(self, name, value):
         self.name = name
         self.value = value        
     
+#Class for entire leaderboard
 class Leaderboard:
     def __init__(self):
         self.leaderboard = dict()
         self.loadLeaderboard()
 
+    #Load previous leaderboard results from txt file
     def loadLeaderboard(self):
         f = open("leaderboard.txt", "r")
         data = f.read()
@@ -24,6 +26,7 @@ class Leaderboard:
             value = int(parts[2])
             self.leaderboard[gameId] = LeaderboardEntry(name,value)
         
+    #Add entry to leaderboard if score is greater than same users prev score
     def addEntry(self, gameId, name, value):
         if gameId in self.leaderboard:
             prevScore = self.leaderboard[gameId].value
@@ -33,7 +36,8 @@ class Leaderboard:
             newEntry = LeaderboardEntry(name, value)
             self.leaderboard[gameId] = newEntry
         self.writeLeaderBoard()
-            
+    
+    #Writes leaderboard as csv to txt files
     def writeLeaderBoard(self):
         data = ""
         for key in self.leaderboard:
@@ -42,7 +46,8 @@ class Leaderboard:
         data = data[:-1]
         f = open('leaderboard.txt', 'w')
         f.write(data)        
-                
+    
+    #Sorts items in dictionary based on score and returns an array
     def getLeaderboardData(self):
         sortedList = []
         scores = []
@@ -52,7 +57,6 @@ class Leaderboard:
             scores.append(self.leaderboard[key].value)
             names.append(self.leaderboard[key].name)
         scores = sorted(scores, reverse=True)
-        print(scores)
         for score in scores:
             for key in self.leaderboard:
                 if self.leaderboard[key].value == score and key not in seenIds:
@@ -62,6 +66,7 @@ class Leaderboard:
                     sortedList.append([name, score])
         return sortedList
     
+    #Generates a hash for each user so that users in different sittings with the same name have unique rows on the leaderboard.
     def generateHash(self):
         keys = []
         for key in self.leaderboard:
